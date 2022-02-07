@@ -1,5 +1,49 @@
 from colorama import Fore
 from random import choice
+import json
+
+def stats(won_flag, attempts):
+    """
+    Read json file with statistics of the game, update it with the game result, print it and save to the file
+    :param won_flag: boolean, if true the user won the game
+    :param attempts: int number of attempts
+    :return:
+    """
+    with open("stats_json.json", "r", encoding="utf-8") as stats_json:
+        dict_stats = json.load(stats_json)
+
+    dict_stats["games"] += 1
+    if won_flag:
+        dict_stats["victories"] += 1
+        perc_vit = round(100 * dict_stats["victories"] / dict_stats["games"])
+        dict_stats["seq_vit"] += 1
+        if dict_stats["best_seq"] < dict_stats["seq_vit"]:
+            dict_stats["best_seq"] = dict_stats["seq_vit"]
+        dict_stats["attempts"][str(attempts - 1)] += 1
+    else:
+        perc_vit = round(100 * dict_stats["victories"] / dict_stats["games"])
+        dict_stats["seq_vit"] = 0
+        dict_stats["fails"] += 1
+
+    # print stats to user
+    print()
+    print(Fore.LIGHTGREEN_EX + '*' * 73)
+    print("                              Estatísticas                     ")
+    print(f"{dict_stats['games']} {Fore.WHITE}jogos | {Fore.LIGHTGREEN_EX}{perc_vit}% {Fore.WHITE}de vitórias | "
+          f"{Fore.LIGHTGREEN_EX}{dict_stats['seq_vit']} {Fore.WHITE}sequência de vitórias | "
+          f"{Fore.LIGHTGREEN_EX}{dict_stats['best_seq']} {Fore.WHITE}melhor sequência")
+    print()
+    print(Fore.LIGHTGREEN_EX + "Distribuição das Tentativas:")
+    print(Fore.LIGHTGREEN_EX + "1 " + Fore.WHITE + "#" * dict_stats["attempts"]["1"])
+    print(Fore.LIGHTGREEN_EX + "2 " + Fore.WHITE + "#" * dict_stats["attempts"]["2"])
+    print(Fore.LIGHTGREEN_EX + "3 " + Fore.WHITE + "#" * dict_stats["attempts"]["3"])
+    print(Fore.LIGHTGREEN_EX + "4 " + Fore.WHITE + "#" * dict_stats["attempts"]["4"])
+    print(Fore.LIGHTGREEN_EX + "5 " + Fore.WHITE + "#" * dict_stats["attempts"]["5"])
+    print(Fore.LIGHTGREEN_EX + "6 " + Fore.WHITE + "#" * dict_stats["attempts"]["6"])
+    print(Fore.LIGHTGREEN_EX + "X " + Fore.WHITE + "#" * dict_stats["fails"])
+
+    with open("stats_json.json", "w", encoding="utf-8") as stats_json:
+        json.dump(dict_stats, stats_json)
 
 
 def show_grid(words_grid):
@@ -22,7 +66,6 @@ def show_grid(words_grid):
             else:
                 print(Fore.RED + ' ' + i + ' ', end="")
         print()
-    print()
 
 
 def in_used_letters(letter, used_letters):
@@ -49,7 +92,7 @@ def show_letters(used_letters):
     """
     Display QWERT letters already attempted to user.
     If letter is placed correctly, shows it in green; if it is placed wrongly, shows it in yellow; if letter in not on
-    secret word, shows it in red; the unesed letters are displayed in white
+    secret word, shows it in red; the unused letters are displayed in white
     :param used_letters: list of letters already used by user
     :return: no return
     """
@@ -170,6 +213,7 @@ Se uma letra ficar vermelha, ela NÃO está na palavra.
     secret_word = None
     while secret_word is None:
         secret_word_no_sign = choice(list_of_words_no_sign)
+        # secret_word_no_sign = "cavalo"
         secret_word = dict_words_in_portuguese.get(secret_word_no_sign)
 
     # user has 6 attempts
@@ -272,6 +316,7 @@ Se uma letra ficar vermelha, ela NÃO está na palavra.
         print(Fore.LIGHTGREEN_EX + "Parabéns! Você venceu!")
         print(f"{attempts - 1}/6 tentativas")
         print(cake)
+        stats(won_flag, attempts)
 
     else:
         skull = """
@@ -300,11 +345,17 @@ Se uma letra ficar vermelha, ela NÃO está na palavra.
         print(Fore.MAGENTA + "Infelizmente você perdeu. Melhor sorte na próxima vez")
         print(f"A palavra era {secret_word}")
         print(skull)
+        stats(won_flag, attempts)
+
+    print()
+    play_again = input("Gostaria de jogar de novo?[S/N]").lower()
+    if play_again == 's':
+        main()
 
 
 # Press the green button in the gutter to run the script.
 # Inspired by Wordle and Termo, but with words in brazilian portuguese and 6 letters words
-# Version 1.0 by Leandro Almeida
+# Version 1.1 by Leandro Almeida
 if __name__ == '__main__':
     main()
 
